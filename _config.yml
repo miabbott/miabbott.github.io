@@ -13,7 +13,7 @@
 # you will see them accessed via {{ site.title }}, {{ site.email }}, and so on.
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
-title: Micah's Errata
+title: My Place for More than 140 Characters
 email: miabbott@redhat.com
 description: > # this means to ignore newlines until "baseurl:"
   A place to share things related to Atomic Host, testing, and other
