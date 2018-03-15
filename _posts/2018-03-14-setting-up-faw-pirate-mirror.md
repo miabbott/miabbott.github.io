@@ -347,7 +347,14 @@ Mar 15 12:48:13 f27ah-ams3-01.localdomain systemd[1]: Started FAW Pirate Mirror.
 ## Conclusion
 
 After all that, I've managed to setup an automated mirror of the Fedora 27 Atomic
-Workstation ostree content in the European region!
+Workstation ostree content in the European region!  The last thing to do is to
+start using it!  Assuming you are already running Fedora 27 Atomic Workstation,
+you can use the following commands to start using the mirror:
+
+```
+# ostree remote add --set gpgkeypath=/etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-27-primary pirate https://faw.piratemirror.party
+# rpm-ostree rebase pirate:fedora/27/x86_64/workstation
+```
 
 (Well, I still need to automate the Let's Encrypt renewal process, but maybe
 that will be another post!)
