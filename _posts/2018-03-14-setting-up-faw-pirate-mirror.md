@@ -53,7 +53,7 @@ able to deploy any commit in the history.
 
 The process of mirroring the content from the official sources took a good
 amount of time, but I ended up with about 2 GB of content spread across 112828
-objects.  All contained in a two commits:
+objects.  All contained in two commits:
 
 ```
 # ostree --repo=repo log fedora/27/x86_64/workstation
@@ -77,7 +77,7 @@ Version: 27.85
 ## Serving Up the Mirror via HTTP
 
 With the content pulled to my VM, I needed to make it available via HTTP and
-since I'm on F27AH, I needed a container run a web server.  Despite having no
+since I'm on F27AH, I needed a container to run a web server.  Despite having no
 experience using it, I decided I would work with the [nginx container](https://hub.docker.com/_/nginx/)
 to serve up the mirror content.
 
@@ -118,7 +118,7 @@ successfully!
 
 ## Securing the Transport Layer with Let's Encrypt!
 
-I was encouraged with my success thusfar and wanted to take the next step of securing
+I was encouraged with my success thus far and wanted to take the next step of securing
 the transport layer via HTTPS.  Of course, I was going to use [Let's Encrypt](https://letsencrypt.org/)
 to get my free SSL certificate.  The question was how to do it on an Atomic Host
 using containers.
@@ -197,7 +197,7 @@ I checked that accessing faw.piratemirror.party via HTTP and HTTPS was successfu
 
 ## Automating the Mirror
 
-The last thing I wanted to do automate as much of as this as possible...using
+The last thing I wanted to do was to automate as much of as this as possible...using
 containers, of course!
 
 After a few experiments, I was able to create a solution using a container, a
@@ -352,7 +352,7 @@ Workstation ostree content in the European region!
 (Well, I still need to automate the Let's Encrypt renewal process, but maybe
 that will be another post!)
 
-I've made most of the code available at https://github.com/miabbott/piratemirror
+I've made most of the code available at https://github.com/miabbott/piratemirror.
 
 In the future, I may describe some of the failures I ran into when exploring this
 project, but for now this project is complete!
