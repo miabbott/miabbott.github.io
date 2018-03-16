@@ -8,7 +8,7 @@ trying to fetch the [Fedora Atomic Workstation](https://fedoraproject.org/wiki/W
 sources.  Especially when connecting from a location in Europe.  This is a
 two-fold problem.  First, the official FAW content is located in a datacenter in
 Phoenix, Arizona in the United States.  Second, the FAW content is not mirrored
-as part of the official Fedora mirror network.
+as part of the official [Fedora mirror network](https://admin.fedoraproject.org/mirrormanager/).
 
 It is discouraging to see users who want to participate in the [Project Atomic](https://projectatomic.io)
 community being frustrated with slow speeds, so I decided I would investigate
@@ -25,7 +25,8 @@ content on the host.
 
 Thankfully, the [ostree](https://ostree.readthedocs.io/en/latest/) model for distributing content allows for easy mirroring
 of a repo using native functionality and this is covered nicely in the
-documentation.  I initialized a repo and began the mirroring process.
+[documentation](http://ostree.readthedocs.io/en/latest/manual/repository-management/#mirroring-repositories).
+I initialized a repo and began the mirroring process.
 
 ```
 # mkdir -p /var/srv/workstation
@@ -365,3 +366,8 @@ In the future, I may describe some of the failures I ran into when exploring thi
 project, but for now this project is complete!
 
 Let me know what you think!
+
+*DISCLAIMER:  The resulting mirror at faw.piratemirror.party has no official
+affliation with the Fedora project or Project Atomic.  There is no official
+support for the mirror.  By using this mirror, you accept all the risks that
+come with its use.*
