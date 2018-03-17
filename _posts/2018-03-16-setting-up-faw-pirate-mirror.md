@@ -111,13 +111,18 @@ $ sudo chcon -R -h -t container_file_t /var/srv/workstation/repo/
 
 Then I was finally able to invoke the container like this:
 
-`$ sudo docker run -v /etc/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro -v /var/srv/workstation/repo/:/usr/share/nginx/html/repo:ro -d -p 80:80 docker.io/nginx`
-
+```
+$ sudo docker run \
+       -v /etc/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro \
+       -v /var/srv/workstation/repo/:/usr/share/nginx/html/repo:ro \
+       -d -p 80:80 \
+       docker.io/nginx
+```
 
 This allowed me to access the ostree content from http://faw.piratemirror.party/repo
 successfully!
 
-## Securing the Transport Layer with Let's Encrypt!
+## Securing the Transport Layer with Let's Encrypt
 
 I was encouraged with my success thus far and wanted to take the next step of securing
 the transport layer via HTTPS.  Of course, I was going to use [Let's Encrypt](https://letsencrypt.org/)
@@ -134,7 +139,14 @@ to make sure I understood how the process would work.
 
 The resulting `docker run` command looked like this:
 
-`$ sudo docker run -it --rm -p 443:443 -p 80:80 --name certbot  -v /etc/letsencrypt:/etc/letsencrypt -v /var/lib/letsencrypt-lib/:/var/lib/letsencrypt docker.io/certbot/certbot certonly`
+```
+$ sudo docker run -it --rm \
+       -p 443:443 -p 80:80 \
+       --name certbot \
+       -v /etc/letsencrypt:/etc/letsencrypt \
+       -v /var/lib/letsencrypt-lib/:/var/lib/letsencrypt \
+       docker.io/certbot/certbot certonly
+```
 
 As before, I also had to set the SELinux label on my mounts to `container_file_t`.
 
@@ -191,7 +203,15 @@ via the parameters `ssl_ciphers` and `ssl_dhparam`.
 
 The last thing to do is put it all of this together to run the nginx container:
 
-`$ sudo docker run --restart always -v /etc/nginx/dhparams.pem:/usr/share/nginx/dhparams.pem:ro -v /etc/letsencrypt:/etc/letsencrypt:ro -v /etc/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro -v /var/srv/workstation/repo/:/usr/share/nginx/html/repo:ro -d -p 443:443 -p 80:80 docker.io/nginx`
+```
+$ sudo docker run --restart always \
+       -v /etc/nginx/dhparams.pem:/usr/share/nginx/dhparams.pem:ro \
+       -v /etc/letsencrypt:/etc/letsencrypt:ro \
+       -v /etc/nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro \
+       -v /var/srv/workstation/repo/:/usr/share/nginx/html/repo:ro \
+       -d -p 443:443 -p 80:80 \
+       docker.io/nginx
+```
 
 I checked that accessing faw.piratemirror.party via HTTP and HTTPS was successful
 (and always ended up using HTTPS).
@@ -266,7 +286,12 @@ script, and setting an entrypoint.
 When we invoke the container, we'll mount in our 'stage' and 'prod' locations
 so that the `mirror.sh` knows how to find them, like this:
 
-`$ sudo docker run -v /var/srv/workstation/stage:/host/stage:ro -v /var/srv/workstation/prod:/host/prod:ro docker.io/miabbott/piratemirror`
+```
+$ sudo docker run \
+       -v /var/srv/workstation/stage:/host/stage:ro \
+       -v /var/srv/workstation/prod:/host/prod:ro \
+       docker.io/miabbott/piratemirror
+```
 
 The last part of the solution is the `systemd` portion.  I knew I could configure
 a `systemd.timer` to kick off a `systemd.service`, so I went looking for examples
