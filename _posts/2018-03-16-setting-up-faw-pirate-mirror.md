@@ -119,7 +119,7 @@ $ sudo docker run \
        docker.io/nginx
 ```
 
-This allowed me to access the ostree content from http://faw.piratemirror.party/repo
+This allowed me to access the ostree content from [http://faw.piratemirror.party/repo](http://faw.piratemirror.party/repo)
 successfully!
 
 ## Securing the Transport Layer with Let's Encrypt
@@ -213,7 +213,7 @@ $ sudo docker run --restart always \
        docker.io/nginx
 ```
 
-I checked that accessing faw.piratemirror.party via HTTP and HTTPS was successful
+I checked that accessing [faw.piratemirror.party](https://faw.piratemirror.party) via HTTP and HTTPS was successful
 (and always ended up using HTTPS).
 
 ## Automating the Mirror
@@ -392,7 +392,7 @@ project, but for now this project is complete!
 
 Let me know what you think!
 
-*DISCLAIMER:  The resulting mirror at faw.piratemirror.party has no official
+*DISCLAIMER:  The resulting mirror at [faw.piratemirror.party](https://faw.piratemirror.party) has no official
 affliation with the Fedora project or Project Atomic.  There is no official
 support for the mirror.  By using this mirror, you accept all the risks that
 come with its use.*
