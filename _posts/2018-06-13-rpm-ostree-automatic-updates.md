@@ -126,7 +126,7 @@ This means we can choose how to use the 'staging' feature on our host.
 **These features are still considered experimental, so you are
 accepting some amount of risk by using them.**
 
-However, by enabling the feature on your host and [reporting issues](https://github.com/projectatomic/rpm-ostree/issues/),
+However, by enabling the features on your host and [reporting issues](https://github.com/projectatomic/rpm-ostree/issues/),
 you are helping to stabilize this feature for production-grade deployments
 and actively participating in open source development.
 
