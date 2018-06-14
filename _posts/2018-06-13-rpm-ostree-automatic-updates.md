@@ -121,8 +121,8 @@ and manual), we can add a new section in `/etc/rpm-ostreed.conf`.
 
 This means we can choose how to use the 'staging' feature on our host.
 
-*!!! WARNING !!! These features are still considered experimental, so you are
-accepting some amount of risk by using them.  !!! WARNING !!!*
+**!!! WARNING !!! These features are still considered experimental, so you are
+accepting some amount of risk by using them.  !!! WARNING !!!**
 
 However, by enabling the feature on your host and [reporting issues](https://github.com/projectatomic/rpm-ostree/issues/),
 you are helping to stabilize this feature for production-grade deployments
