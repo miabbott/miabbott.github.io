@@ -18,6 +18,10 @@ installing Fedora Silverblue.  We'll go through the following topics:
   - setting up [Flathub](https://flathub.org) and installing Flatpaks
   - switching out the OS entirely
 
+*NOTE:* This is not intended as a comprehensive guide to every tool and operation
+possible on Silverblue, but should be a starting point on how to start adapting your
+existing workflows to the ways of a container host.
+
 ## Exercise 0:  Install Fedora Silverblue
 
 In order to proceed with the remainder of the guide, you'll need a working
@@ -443,10 +447,204 @@ Copying config sha256:6a05d9c836c83d1e16c89570e4782ad5b09266f6e1cbaf4eb3cc4ce4ac
 Writing manifest to image destination
 Storing signatures
 --> 6a05d9c836c83d1e16c89570e4782ad5b09266f6e1cbaf4eb3cc4ce4acb3737c
+$ sudo buildah images
+IMAGE NAME                                               IMAGE TAG            IMAGE ID             CREATED AT             SIZE
+registry.fedoraproject.org/fedora                        29                   69c5db8b64a7         Jan 9, 2019 01:48      283 MB
+localhost/miabbott/strace                                latest               6a05d9c836c8         Jan 24, 2019 08:31     298 MB
+$ sudo podman images
+REPOSITORY                          TAG      IMAGE ID       CREATED       SIZE
+localhost/miabbott/strace           latest   6a05d9c836c8   7 hours ago   298 MB
+registry.fedoraproject.org/fedora   29       69c5db8b64a7   2 weeks ago   283 MB
 ```
+
+As you can see above, the newly built container image lives in a shared container storage
+space that is viewable by both `podman` and `buildah`.  Now we can run the container and
+specify the `strace` command directly.  You can see that if you try to run `strace` directly
+on the host, it does not exist.
+
+We have to use `localhost` as the value for the registry as the image only lives on our
+host.
+
+```
+$ sudo podman run -it localhost/miabbott/strace strace
+strace: must have PROG [ARGS] or -p PID
+Try 'strace -h' for more information.
+$ strace
+-bash: strace: command not found
+```
+
+With a few extra flags, we can trace a process on the host.  This requires the use of
+the `--privileged` flag, so we have the necessary kernel capabilities to attach to
+a running process.  Additionally, we need to pass in the PID namespace of the host
+so that we can see the process we want to trace inside the container.
+
+We'll start up the `rpm-ostree` daemon with `rpm-ostree status`, capture the PID of the
+process and use `strace` to get a trace of the `rpm-ostree` PID inside the container.
+
+```
+$ rpm-ostree status > /dev/null && pidof rpm-ostree
+1649
+$ sudo podman run -it --privileged --pid=host localhost/miabbott/strace strace -p 1649
+strace: Process 1649 attached
+restart_syscall(<... resuming interrupted poll ...>) = 0
+socket(AF_UNIX, SOCK_DGRAM|SOCK_CLOEXEC, 0) = 16
+getsockopt(16, SOL_SOCKET, SO_SNDBUF, [212992], [4]) = 0
+setsockopt(16, SOL_SOCKET, SO_SNDBUF, [8388608], 4) = 0
+getuid()                                = 0
+geteuid()                               = 0
+getgid()                                = 0
+getegid()                               = 0
+sendmsg(16, {msg_name={sa_family=AF_UNIX, sun_path="/run/systemd/notify"}, msg_namelen=21, msg_iov=[{iov_base="STATUS=clients=0; idle exit in 5"..., iov_len=41}], msg_iovlen=1, msg_controllen=0, msg_flags=0}, M$
+G_NOSIGNAL) = 41
+close(16)                               = 0
+poll([{fd=4, events=POLLIN}], 1, 982^Cstrace: Process 1649 detached
+ <detached ...>
+```
+
+Hopefully, this demonstrates for you how you can containerize applications in a
+container and use them as part of Silverblue.
+
+But what if your application isn't well suited for containerization, something like
+a host extension?  This is where package layering comes in.
 
 ## Exercise 6: Package Layering
 
+The paradigm for Silverblue is to use containers whenever possible.  But sometimes
+this just isn't feasible or practical.  In these relatively rare cases, we can
+still use the application via package layering.
 
-## Extra Credit: Switching Your OS
+Package layering is roughly the equivalent of `dnf install` on a traditional Fedora
+Workstation host.  The key difference is that the package being installed on Silverblue
+is installed into a new deployment and requires a reboot to be able to use the
+application.  The benefit to this is that your running host is safely protected from
+any kind of malicious behavior that an RPM might have as part of it's install operation.
 
+For this exercise, we are going to re-use the `strace` package as an example.  It doesn't
+really fit the use case for package layering, since it is relatively easy to run within
+a container, but should illustrate the basics of package layering.
+
+The entrypoint for package layering operations is `rpm-ostree install`.  This command has
+the ability to query the DNF repos in Fedora for the package that was requested, then
+download and install the package in the separate deployment. Additionally, you can
+pass a URL to the `install` operation or even download the RPM local to your host and
+provide that as an argument.
+
+We start with the two deployments from the previous exercise: the original deployment
+from the Silverblue install and the upgraded deployment from Exercise 1.  We'll do
+`rpm-ostree install strace` and see what we end up with.
+
+```
+$ rpm-ostree status
+State: idle
+AutomaticUpdates: stage; rpm-ostreed-automatic.timer: no runs since boot
+Deployments:
+● ostree://fedora-workstation:fedora/29/x86_64/silverblue
+                   Version: 29.20190119.0 (2019-01-19T00:53:06Z)
+                    Commit: f027d3d70a4da161200382ad85c16ff1b6b5c4c05d357b962ed10fda6f2dc395
+              GPGSignature: Valid signature by 5A03B4DD8254ECA02FDA1637A20AA56B429476B4
+
+  ostree://fedora-workstation:fedora/29/x86_64/silverblue
+                   Version: 29.1.2 (2018-10-24T23:20:30Z)
+                    Commit: f17b670fa8cf69144be5ae0c968dc2ee7eb6999a5f7a54f1ee71eec7783e434a
+              GPGSignature: Valid signature by 5A03B4DD8254ECA02FDA1637A20AA56B429476B4
+
+$ sudo rpm-ostree install strace
+Checking out tree f027d3d... done
+Enabled rpm-md repositories: updates fedora
+Updating metadata for 'updates'... done
+rpm-md repo 'updates'; generated: 2019-01-24T03:12:25Z
+Updating metadata for 'fedora'... done
+rpm-md repo 'fedora'; generated: 2018-10-24T22:20:15Z
+Importing rpm-md... done
+Resolving dependencies... done
+Will download: 1 package (979.2 kB)
+Downloading from 'updates'... done
+Importing packages... done
+Checking out packages... done
+Running pre scripts... done
+Running post scripts... done
+Writing rpmdb... done
+Writing OSTree commit... done
+Staging deployment... done
+Added:
+  strace-4.26-1.fc29.x86_64
+Run "systemctl reboot" to start a reboot
+
+$ rpm-ostree status
+State: idle
+AutomaticUpdates: stage; rpm-ostreed-automatic.timer: no runs since boot
+Deployments:
+  ostree://fedora-workstation:fedora/29/x86_64/silverblue
+                   Version: 29.20190119.0 (2019-01-19T00:53:06Z)
+                BaseCommit: f027d3d70a4da161200382ad85c16ff1b6b5c4c05d357b962ed10fda6f2dc395
+              GPGSignature: Valid signature by 5A03B4DD8254ECA02FDA1637A20AA56B429476B4
+           LayeredPackages: strace
+
+● ostree://fedora-workstation:fedora/29/x86_64/silverblue
+                   Version: 29.20190119.0 (2019-01-19T00:53:06Z)
+                    Commit: f027d3d70a4da161200382ad85c16ff1b6b5c4c05d357b962ed10fda6f2dc395
+              GPGSignature: Valid signature by 5A03B4DD8254ECA02FDA1637A20AA56B429476B4
+
+  ostree://fedora-workstation:fedora/29/x86_64/silverblue
+                   Version: 29.1.2 (2018-10-24T23:20:30Z)
+                    Commit: f17b670fa8cf69144be5ae0c968dc2ee7eb6999a5f7a54f1ee71eec7783e434a
+              GPGSignature: Valid signature by 5A03B4DD8254ECA02FDA1637A20AA56B429476B4
+$ strace
+-bash: strace: command not found
+```
+
+Now we have three deployments:  the original, the upgraded, and the upgraded with `strace`
+layered on top.  Notice that the `rpm-ostree install` operation printed the differences
+between the upgraded deployment and the new deployment in it's output.  This means that
+the only change that was made was the addition of that `strace` package.  But if you try
+to run `strace`, it is still not available.  So we need to reboot the host to activate
+the new deployment and make `strace` available.
+
+```
+$ sudo systemctl reboot
+Connection to 192.168.124.123 closed by remote host.
+Connection to 192.168.124.123 closed.
+$ ssh -l miabbott 192.168.124.123
+Warning: Permanently added '192.168.124.123' (ECDSA) to the list of known hosts.
+miabbott@192.168.124.123's password:
+Last login: Thu Jan 24 15:20:39 2019 from 192.168.124.1
+
+$ rpm-ostree status
+State: idle
+AutomaticUpdates: stage; rpm-ostreed-automatic.timer: no runs since boot
+Deployments:
+● ostree://fedora-workstation:fedora/29/x86_64/silverblue
+                   Version: 29.20190119.0 (2019-01-19T00:53:06Z)
+                BaseCommit: f027d3d70a4da161200382ad85c16ff1b6b5c4c05d357b962ed10fda6f2dc395
+              GPGSignature: Valid signature by 5A03B4DD8254ECA02FDA1637A20AA56B429476B4
+           LayeredPackages: strace
+
+  ostree://fedora-workstation:fedora/29/x86_64/silverblue
+                   Version: 29.20190119.0 (2019-01-19T00:53:06Z)
+                    Commit: f027d3d70a4da161200382ad85c16ff1b6b5c4c05d357b962ed10fda6f2dc395
+              GPGSignature: Valid signature by 5A03B4DD8254ECA02FDA1637A20AA56B429476B4
+$ strace
+strace: must have PROG [ARGS] or -p PID
+Try 'strace -h' for more information.
+```
+
+After the reboot one of the deployments was pruned and we are left with the new deployment
+with the package layered and the upgraded deployment with no packages.  If we decided we
+didn't need the `strace` package on the host, we could use `rpm-ostree rollback` to
+roll the host back to the upgraded deployment.  Or we could use `rpm-ostree uninstall`
+to remove the package layer from the deployment.  The end result is roughly the same:
+you end up with the `strace` package being unavailable on the resulting deployment (after
+a reboot, of course).
+
+There are additional package layering operations that you can do, such as replacing a
+package in the base set or removing packages from the base set.  But these operations
+will not be as commonly used as simple `rpm-ostree install/uninstall`.
+
+## Conclusion
+
+This guide was intended to give you an idea of some of the tasks you would be doing
+soon after installing Silverblue on the first day.  Of course, there are many
+other things can be done with containers, Flatpaks, and the `ostree/rpm-ostree` stack;
+you are encouraged to read (and contribute to!) the [Silverblue documenation](https://docs.fedoraproject.org/en-US/fedora-silverblue/),
+the upstream documentation for the various projects and come ask questions in
+the [Silverblue Discourse site](https://discussion.fedoraproject.org/c/desktop/silverblue).
