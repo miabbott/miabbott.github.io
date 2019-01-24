@@ -18,7 +18,7 @@ installing Fedora Silverblue.  We'll go through the following topics:
   - setting up [Flathub](https://flathub.org) and installing Flatpaks
   - switching out the OS entirely
 
-*NOTE:* This is not intended as a comprehensive guide to every tool and operation
+**NOTE:** This is not intended as a comprehensive guide to every tool and operation
 possible on Silverblue, but should be a starting point on how to start adapting your
 existing workflows to the ways of a container host.
 
@@ -58,15 +58,17 @@ Deployments:
               GPGSignature: Valid signature by 5A03B4DD8254ECA02FDA1637A20AA56B429476B4
 ```
 
-*NOTE:* if you are following this guide at DevConf 2019, you'll need to re-configure your
+**DEVCONF NOTE:**
+If you are following this guide at DevConf 2019, you'll need to re-configure your
 remote to point to the local mirror, in order to not overwhelm the conference WiFi.
 If you are following these instructions elsewhere, you can skip this reconfiguration of
 the remote.
 
-*NOTE:* To reconfigure the remote, edit `/etc/ostree/remotes.d/fedora-workstation.conf`
+To reconfigure the remote, edit `/etc/ostree/remotes.d/fedora-workstation.conf`
 and update the `url` field to the value provided during the DevConf session.  Additionally,
 change the value of `gpg-verify` to `false`.  You can reset these values to their defaults
 after the DevConf session is over.
+**END OF DEVCONF NOTE**
 
 Note the timestamp on the `Version` field which states the content is from October 2018.
 Additionally, you should notice the `AutomaticUpdates` field is set to disabled and the
@@ -255,7 +257,7 @@ It houses a wide variety of free and non-free applications.  However, it is
 not installed by default as part of Silverblue.  So the first thing to do in
 order to start using the available Flatpaks is to enable the Flathub repo.
 
-*NOTE* Typically you should be able to manage your Flatpak repos and applications
+**NOTE:** Typically you should be able to manage your Flatpak repos and applications
 using GNOME Software, but you may encounter errors when trying to use GNOME Software
 and Flatpaks on a fresh install of Silverblue.  That experience will be improved
 in future releases.  For now, we will use the command line to manage the Flatpaks
