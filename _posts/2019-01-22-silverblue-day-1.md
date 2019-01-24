@@ -54,8 +54,15 @@ Deployments:
               GPGSignature: Valid signature by 5A03B4DD8254ECA02FDA1637A20AA56B429476B4
 ```
 
-*NOTE:* if you are following this guide at DevConf 2019, first configure the local mirror
-as described in the class, otherwise proceed as written.
+*NOTE:* if you are following this guide at DevConf 2019, you'll need to re-configure your
+remote to point to the local mirror, in order to not overwhelm the conference WiFi.
+If you are following these instructions elsewhere, you can skip this reconfiguration of
+the remote.
+
+*NOTE:* To reconfigure the remote, edit `/etc/ostree/remotes.d/fedora-workstation.conf`
+and update the `url` field to the value provided during the DevConf session.  Additionally,
+change the value of `gpg-verify` to `false`.  You can reset these values to their defaults
+after the DevConf session is over.
 
 Note the timestamp on the `Version` field which states the content is from October 2018.
 Additionally, you should notice the `AutomaticUpdates` field is set to disabled and the
@@ -88,20 +95,41 @@ Deployments:
 Since we don't want to wait for the timer to fire, we can manually kick off the automatic
 update service with `systemctl start rpm-ostreed-automatic.service`.  After doing so, inspect
 the output of `rpm-ostree status` again and you should see that the `State` field is no longer
-`idle`.
+`idle`. And there is a `Transaction` field now that shows the upgrade operation that is occurring.
 
 ```
-<< insert output of rpm-ostree status during background upgrade >>
+$ rpm-ostree status
+State: busy
+AutomaticUpdates: stage; rpm-ostreed-automatic.service: running
+Transaction: upgrade
+Deployments:
+● ostree://fedora-workstation:fedora/29/x86_64/silverblue
+                   Version: 29.1.2 (2018-10-24 23:20:30)
+                    Commit: f17b670fa8cf69144be5ae0c968dc2ee7eb6999a5f7a54f1ee71eec7783e434a
+              GPGSignature: Valid signature by 5A03B4DD8254ECA02FDA1637A20AA56B429476B4
 ```
 
-The upgrade will run in the background and will take some time, so let it run for a
+The upgrade will run in the background and may take some time, so let it run for a
 few minutes and periodically check `rpm-ostree status` to see if it has completed.
 When it has completed, you'll see two deployments listed - your current deployment
 that you are booted into and the upgraded deployment that is ready to be rebooted
 into.
 
 ```
-<< insert output of rpm-ostree status after upgrade >>
+$ rpm-ostree status
+State: idle
+AutomaticUpdates: stage; rpm-ostreed-automatic.timer: last run 10s ago
+Deployments:
+  ostree://fedora-workstation:fedora/29/x86_64/silverblue
+                   Version: 29.20190119.0 (2019-01-19 00:53:06)
+                    Commit: f027d3d70a4da161200382ad85c16ff1b6b5c4c05d357b962ed10fda6f2dc395
+              GPGSignature: Valid signature by 5A03B4DD8254ECA02FDA1637A20AA56B429476B4
+                      Diff: 389 upgraded, 7 removed, 39 added
+
+● ostree://fedora-workstation:fedora/29/x86_64/silverblue
+                   Version: 29.1.2 (2018-10-24 23:20:30)
+                    Commit: f17b670fa8cf69144be5ae0c968dc2ee7eb6999a5f7a54f1ee71eec7783e434a
+              GPGSignature: Valid signature by 5A03B4DD8254ECA02FDA1637A20AA56B429476B4
 ```
 
 Did you catch that?  Your running OS has not been touched by the upgrade process and
@@ -212,12 +240,210 @@ usage with Fedora Silverblue.
 
 ## Exercise 3: Using Flatpaks
 
+One of the things you will notice about the set of applications provided
+in Silverblue is the absence of some of the default GNOME applications,
+which is a notable change from Fedora Workstation.  This choice was made
+to slim down the install size of Silverblue because we can get many (if
+not all) of our GNOME applications from Flatpaks.
+
+The most popular Flatpak repo at the moment is [Flathub](https://flathub.org).
+It houses a wide variety of free and non-free applications.  However, it is
+not installed by default as part of Silverblue.  So the first thing to do in
+order to start using the available Flatpaks is to enable the Flathub repo.
+
+*NOTE* Typically you should be able to manage your Flatpak repos and applications
+using GNOME Software, but you may encounter errors when trying to use GNOME Software
+and Flatpaks on a fresh install of Silverblue.  That experience will be improved
+in future releases.  For now, we will use the command line to manage the Flatpaks
+and Flatpak repos.
+
+You can browse to the Flathub setup page for Fedora ([https://flatpak.org/setup/Fedora/](https://flatpak.org/setup/Fedora/))
+and copy the link for the "Flathub repository file". We install the repo
+on the CLI like so:
+
+`$ sudo flatpak --system remote-add flathub https://flathub.org/repo/flathub.flatpakrepo`
+
+This installs the Flathub repo for the entire system.
+
+Now we can install an application from Flathub.  Using your web browser, browse
+the available applications on Flathub and pick one to install.  As before, copy
+the link from the "Install" button and we'll install it from the command line.
+Below, you can see what it looks like to install GIMP:
+
+```
+$ sudo flatpak install https://flathub.org/repo/appstream/org.gimp.GIMP.flatpakref
+Required runtime for org.gimp.GIMP/x86_64/stable (runtime/org.gnome.Platform/x86_64/3.28) found in remote flathub
+Do you want to install it? [y/n]: y
+Installing in system:
+org.gnome.Platform/x86_64/3.28             flathub 6d1d0ebbd724
+org.freedesktop.Platform.ffmpeg/x86_64/1.6 flathub d757f762489e
+org.gnome.Platform.Locale/x86_64/3.28      flathub 2823e3d81b74
+org.gimp.GIMP/x86_64/stable                flathub 1c130cbfaec9
+  permissions: ipc, network, x11
+  file access: /tmp, host, xdg-config/GIMP, xdg-config/gtk-3.0
+  dbus access: org.freedesktop.FileManager1, org.gtk.vfs, org.gtk.vfs.*
+  tags: stable
+Is this ok [y/n]: y
+Installing: org.gnome.Platform/x86_64/3.28 from flathub
+[####################] 975 metadata, 20492 content objects fetched; 292154 KiB transferred in 94 seconds
+Now at 6d1d0ebbd724.
+Installing: org.freedesktop.Platform.ffmpeg/x86_64/1.6 from flathub
+[####################] 8 metadata, 12 content objects fetched; 2788 KiB transferred in 1 seconds
+Now at d757f762489e.
+Installing: org.gnome.Platform.Locale/x86_64/3.28 from flathub
+[####################] 4 metadata, 1 content objects fetched; 14 KiB transferred in 0 seconds
+Now at 2823e3d81b74.
+Installing: org.gimp.GIMP/x86_64/stable from flathub
+[####################] 511 metadata, 4671 content objects fetched; 75918 KiB transferred in 24 seconds
+Now at 1c130cbfaec9.
+```
+As you can see, the `flatpak` command automatically pulled the required runtimes
+for GIMP and has installed them (and the app) for all users on the system.
+
+Now if you examine the installed applications via GNOME, you'll see (in this case)
+GIMP installed and able to be run.
+
+Congratulations!  You've installed your first Flatpak!
 
 ## Exercise 4: Running Containers
 
+Containers are the logical means of running software that is not installed as part of
+the base OS.  In case you didn't realize it, running your Flatpak'ed application was
+one of the ways to run a container.  While Flatpaks are nice for applications with
+graphical interfaces, they can be a bit heavyweight for running a applicaition that
+typically runs on the command line or as a daemon-like process.
+
+The default way of running and managing containers in Fedora Silverblue is through
+the command line utility called `podman`.  If you have ever used the `docker` command
+line, using `podman` will be very familiar to you.
+
+To start, we will pull a container image from the Fedora registry and then run it,
+all using `podman`.  We'll also display the contents of `/etc/os-release` on the host
+and in the container, to demonstrate we are actually in a container.
+
+```
+$ cat /etc/os-release | grep VERSION
+VERSION="29.20190119.0 (Workstation Edition)"
+VERSION_ID=29
+VERSION_CODENAME=""
+REDHAT_BUGZILLA_PRODUCT_VERSION=29
+REDHAT_SUPPORT_PRODUCT_VERSION=29
+OSTREE_VERSION=29.20190119.0
+$ sudo podman pull registry.fedoraproject.org/fedora:28
+Trying to pull registry.fedoraproject.org/fedora:28...Getting image source signatures
+Copying blob e69e955c514f: 85.99 MiB / 85.99 MiB [==========================] 8s
+Copying config ded494ce3076: 1.27 KiB / 1.27 KiB [==========================] 0s
+Writing manifest to image destination
+Storing signatures
+ded494ce3076e8f2d264235fdb09da5970921d8317f8fd024ab65821bf13e29f
+[miabbott@localhost ~]$ sudo podman run -it registry.fedoraproject.org/fedora:28
+[root@c4f481a4a4ed /]# cat /etc/os-release | grep VERSION
+VERSION="28 (Twenty Eight)"
+VERSION_ID=28
+REDHAT_BUGZILLA_PRODUCT_VERSION=28
+REDHAT_SUPPORT_PRODUCT_VERSION=28
+
+```
+
+And now you have run a container on the command line!
+
+If you wanted to delete the container you just run, you would use `podman rm`
+and deleting the container image would be `podman rmi`.
+
+```
+$ sudo podman ps -a
+CONTAINER ID  IMAGE                                 COMMAND    CREATED            STATUS                         PORTS  NAMES
+c4f481a4a4ed  registry.fedoraproject.org/fedora:28  /bin/bash  About an hour ago  Exited (0) About a minute ago         practical_lewin
+ sudo podman rm c4f481a4a4ed
+c4f481a4a4ed973b19141a9adcc463dcb8e171444d0f927bdf6a6ddf2495aa27
+$ sudo podman rm c4f481a4a4ed
+c4f481a4a4ed973b19141a9adcc463dcb8e171444d0f927bdf6a6ddf2495aa27
+$ sudo podman images -a
+REPOSITORY                          TAG   IMAGE ID       CREATED        SIZE
+registry.fedoraproject.org/fedora   28    ded494ce3076   3 months ago   264 MB
+$ sudo podman rmi ded494ce3076
+ded494ce3076e8f2d264235fdb09da5970921d8317f8fd024ab65821bf13e29f
+```
+
+Running a container from a base image is not terribly exciting.  In
+the next section, we will build our own container from scratch
+and run it.
 
 ## Exercise 5: Building Containers
 
+While in the `docker` ecosystem, one would use `docker build` or
+`docker compose` for building container image.  But in Fedora Silverblue,
+we use `buildah` to build our container images.  Since `buildah` supports
+building container images from Dockerfiles, we are able to reuse any
+existing Dockerfiles to build images on Silverblue.
+
+For this exercise, we'll create a small Dockerfile that installs `strace`
+which is not installed as part of the Silverblue OS.  Create a Dockerfile
+that looks like this:
+
+```
+$ cat Dockerfile
+FROM registry.fedoraproject.org/fedora:29
+RUN dnf -y install strace && \
+    dnf clean all
+```
+
+And we can build the container image, using the `buildah bud` command. The
+`-t` flag is the way to "tag" your container image.  You can use any string
+you choose for your image.
+
+```
+$ sudo buildah bud -t miabbott/strace .
+[sudo] password for miabbott:
+STEP 1: FROM registry.fedoraproject.org/fedora:29
+STEP 2: RUN dnf -y install strace &&     dnf clean all
+Fedora Modular 29 - x86_64                                                                                                                                                         507 kB/s | 1.5 MB     00:03
+Fedora Modular 29 - x86_64 - Updates                                                                                                                                               1.6 MB/s | 2.0 MB     00:01
+Fedora 29 - x86_64 - Updates                                                                                                                                                       5.4 MB/s |  20 MB     00:03
+Fedora 29 - x86_64                                                                                                                                                                 6.9 MB/s |  62 MB     00:09
+Dependencies resolved.
+===================================================================================================================================================================================================================
+ Package                                          Arch                                             Version                                                 Repository                                         Size
+===================================================================================================================================================================================================================
+Installing:
+ strace                                           x86_64                                           4.26-1.fc29                                             updates                                           956 k
+
+Transaction Summary
+===================================================================================================================================================================================================================
+Install  1 Package
+
+Total download size: 956 k
+Installed size: 2.2 M
+Downloading Packages:
+strace-4.26-1.fc29.x86_64.rpm                                                                                                                                                       10 MB/s | 956 kB     00:00
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Total                                                                                                                                                                              743 kB/s | 956 kB     00:01
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                                                                                                                                                           1/1
+  Installing       : strace-4.26-1.fc29.x86_64                                                                                                                                                                 1/1
+  Running scriptlet: strace-4.26-1.fc29.x86_64                                                                                                                                                                 1/1
+  Verifying        : strace-4.26-1.fc29.x86_64                                                                                                                                                                 1/1
+
+Installed:
+  strace-4.26-1.fc29.x86_64
+
+Complete!
+33 files removed
+STEP 3: COMMIT containers-storage:[overlay@/var/lib/containers/storage+/var/run/containers/storage:overlay.mountopt=nodev,overlay.override_kernel_check=true]localhost/miabbott/strace:latest
+Getting image source signatures
+Skipping fetch of repeat blob sha256:4fbdefa47448c4641a7da56cad347c5efacf26d52f4e5d14703658d4b50ed0c2
+Copying blob sha256:6315e0eaa586d98d8e54b5095e5c83f23f41f9645e469202c203b70fb30d62a0
+ 3.34 MiB / 3.34 MiB [======================================================] 0s
+Copying config sha256:6a05d9c836c83d1e16c89570e4782ad5b09266f6e1cbaf4eb3cc4ce4acb3737c
+ 621 B / 621 B [============================================================] 0s
+Writing manifest to image destination
+Storing signatures
+--> 6a05d9c836c83d1e16c89570e4782ad5b09266f6e1cbaf4eb3cc4ce4acb3737c
+```
 
 ## Exercise 6: Package Layering
 
