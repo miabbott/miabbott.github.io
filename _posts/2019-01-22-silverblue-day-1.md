@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  Fedora Silverblue: Day 1
+title: Fedora Silverblue Day 1
 ---
 
 Getting started with [Fedora Silverblue](https://silverblue.fedoraproject.org) is much more
