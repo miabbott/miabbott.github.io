@@ -650,3 +650,7 @@ other things can be done with containers, Flatpaks, and the `ostree/rpm-ostree` 
 you are encouraged to read (and contribute to!) the [Silverblue documenation](https://docs.fedoraproject.org/en-US/fedora-silverblue/),
 the upstream documentation for the various projects and come ask questions in
 the [Silverblue Discourse site](https://discussion.fedoraproject.org/c/desktop/silverblue).
+
+If you have questions or comments about the content, please reach out to me on [Twitter](https://twitter.com/rageear)
+and if you have found any errors or have suggested improvements, you can open an
+issue/PR on the [source repo](https://github.com/miabbott/miabbott.github.io).
